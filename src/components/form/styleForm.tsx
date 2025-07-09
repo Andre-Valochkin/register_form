@@ -56,9 +56,25 @@ export const StyleFormLabelCheckbox = styled.label``;
 export const StyleFormInputCheckbox = styled.input``;
 
 export const StyleFormButton = styled.button`
-  background-color: rgba(40, 40, 245, 0.89);
-  padding: 10px 40px;
-  color: #fff;
+  padding: 10px 20px;
+  background-color: #4a90e2;
+  color: white;
+  font-size: 16px;
+  font-weight: 600;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+
+  &:hover:not(:disabled) {
+    background-color: rgba(40, 40, 245, 0.89);
+  }
+
+  &:disabled {
+    background-color: #a0aec0;
+    cursor: not-allowed;
+    opacity: 0.6;
+  }
 `;
 
 export const StyleFormButtonShow = styled.button`
