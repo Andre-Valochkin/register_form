@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
+import FileDropzone from "./dropzone/FileDropzone";
 import {
   StyleFormWrapper,
   StyleFormTitle,
@@ -72,6 +73,7 @@ const schema = z
       .or(z.literal(""))
       .optional(),
     check: z.boolean().optional(),
+    photo: z.any().optional(),
   })
   .superRefine((data, ctx) => {
     if (
@@ -105,6 +107,9 @@ function FormRegister() {
 
   const [showPassword, setShowPassword] = useState(false);
   const [showRepeatPassword, setShowRepeatPassword] = useState(false);
+  const [photo, setPhoto] = useState<File | null>(null);
+  const [photoError, setPhotoError] = useState<string | null>(null);
+  const [preview, setPreview] = useState<string | null>(null);
 
   const mail = watch("mail") ?? "";
   const password = watch("password") ?? "";
@@ -113,9 +118,15 @@ function FormRegister() {
   const isRequiredFieldsFilled =
     mail.trim() !== "" &&
     password.trim() !== "" &&
-    repeatPassword.trim() !== "";
+    repeatPassword.trim() !== "" &&
+    preview !== null;
 
   const onSubmit = async (data: MyForm) => {
+    if (!photo) {
+      setPhotoError("Загрузите фото");
+      return;
+    }
+
     if (data.password !== data.repeatPassword) {
       setError("repeatPassword", {
         type: "manual",
@@ -126,6 +137,18 @@ function FormRegister() {
 
     console.log("Данные формы: ", data);
     alert("Форма успешно отправлена!");
+  };
+
+  const handleFileAccepted = (file: File) => {
+    setPhotoError(null);
+    setPhoto(file);
+    setPreview(URL.createObjectURL(file));
+  };
+
+  const handleFileRemove = () => {
+    setPhoto(null);
+    setPreview(null);
+    setPhotoError(null);
   };
 
   return (
@@ -220,6 +243,21 @@ function FormRegister() {
                 </p>
               )}
             </StyleFormFormElement>
+            <StyleFormFormElement>
+              <StyleFormLabel>
+                <StyleFormSpanName>
+                  Фото: <StyleFormSpanStar>*</StyleFormSpanStar>
+                </StyleFormSpanName>
+                <FileDropzone
+                  preview={preview}
+                  onFileAccepted={handleFileAccepted}
+                  onRemove={handleFileRemove}
+                  setPhotoError={setPhotoError}
+                  error={photoError}
+                />
+              </StyleFormLabel>
+            </StyleFormFormElement>
+
             <StyleFormCheckboxContainer>
               <StyleFormLabelCheckbox>
                 <StyleFormInputCheckbox

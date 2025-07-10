@@ -85,3 +85,41 @@ export const StyleFormButtonShow = styled.button`
   border: none;
   cursor: pointer;
 `;
+
+export const StyleDropzoneContainer = styled.div`
+  border: 2px dashed #888;
+  border-radius: 12px;
+  padding: 20px;
+  text-align: center;
+  cursor: pointer;
+  transition: 0.3s;
+
+  &:hover {
+    border-color: #555;
+    background: #f9f9f9;
+  }
+`;
+
+export const StyleDropzonePreviewImage = styled.img`
+  width: 80px;
+  height: 80px;
+  margin-top: 10px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #888;
+`;
+
+export const StyleDropzoneRemoveButton = styled.button`
+  margin-top: 10px;
+  background-color: #ff4d4d;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+
+  &:hover {
+    background-color: #cc0000;
+  }
+`;
