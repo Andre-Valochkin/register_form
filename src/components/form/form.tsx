@@ -108,7 +108,7 @@ function FormRegister() {
   const [showPassword, setShowPassword] = useState(false);
   const [showRepeatPassword, setShowRepeatPassword] = useState(false);
   const [photo, setPhoto] = useState<File | null>(null);
-  const [photoError, setPhotoError] = useState<string | null>(null);
+  const [photoError, setPhotoError] = useState<string | undefined>();
   const [preview, setPreview] = useState<string | null>(null);
 
   const mail = watch("mail") ?? "";
@@ -140,7 +140,7 @@ function FormRegister() {
   };
 
   const handleFileAccepted = (file: File) => {
-    setPhotoError(null);
+    setPhotoError(undefined);
     setPhoto(file);
     setPreview(URL.createObjectURL(file));
   };
@@ -148,7 +148,7 @@ function FormRegister() {
   const handleFileRemove = () => {
     setPhoto(null);
     setPreview(null);
-    setPhotoError(null);
+    setPhotoError(undefined);
   };
 
   return (
