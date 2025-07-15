@@ -244,7 +244,7 @@ function FormRegister() {
               )}
             </StyleFormFormElement>
             <StyleFormFormElement>
-              <StyleFormLabel>
+              <div>
                 <StyleFormSpanName>
                   Фото: <StyleFormSpanStar>*</StyleFormSpanStar>
                 </StyleFormSpanName>
@@ -255,7 +255,7 @@ function FormRegister() {
                   setPhotoError={setPhotoError}
                   error={photoError}
                 />
-              </StyleFormLabel>
+              </div>
             </StyleFormFormElement>
 
             <StyleFormCheckboxContainer>
