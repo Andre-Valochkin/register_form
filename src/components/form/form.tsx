@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
+import FileDropzone from "./dropzone/FileDropzone";
 import {
   StyleFormWrapper,
   StyleFormTitle,
@@ -21,8 +22,50 @@ import {
 
 const schema = z
   .object({
-    mail: z.string().email({ message: "Не верный формат email" }),
-    password: z.string().min(6, { message: "минимум 6 символов" }),
+    mail: z.string().superRefine((val, ctx) => {
+      if (!val.trim()) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Поле Email обязательно для заполнения",
+        });
+      } else if (!/^\S+@\S+\.\S+$/.test(val)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Не верный формат email",
+        });
+      }
+    }),
+    password: z.string().superRefine((val, ctx) => {
+      if (!val.trim()) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Поле Пароль обязательно для заполнения",
+        });
+        return;
+      }
+
+      const passwordErrors: string[] = [];
+
+      if (val.length < 6) {
+        passwordErrors.push("Минимум 6 символов");
+      }
+      if (!/[a-z]/.test(val)) {
+        passwordErrors.push("Должна быть хотя бы одна маленькая буква");
+      }
+      if (!/[A-Z]/.test(val)) {
+        passwordErrors.push("Должна быть хотя бы одна большая буква");
+      }
+      if (!/[^a-zA-Z0-9]/.test(val)) {
+        passwordErrors.push("Должен быть хотя бы один спецсимвол");
+      }
+
+      if (passwordErrors.length) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: passwordErrors.join("\n"),
+        });
+      }
+    }),
     repeatPassword: z.string(),
     nic: z
       .string()
@@ -30,10 +73,20 @@ const schema = z
       .or(z.literal(""))
       .optional(),
     check: z.boolean().optional(),
+    photo: z.any().optional(),
   })
-  .refine((data) => data.password === data.repeatPassword, {
-    message: "Пароли не совпадают",
-    path: ["repeatPassword"],
+  .superRefine((data, ctx) => {
+    if (
+      data.password &&
+      data.repeatPassword &&
+      data.password !== data.repeatPassword
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Пароли не совпадают",
+        path: ["repeatPassword"],
+      });
+    }
   });
 
 type MyForm = z.infer<typeof schema>;
@@ -42,46 +95,78 @@ function FormRegister() {
   const {
     register,
     handleSubmit,
-    setFocus,
+    setError,
+    watch,
     formState: { errors },
   } = useForm<MyForm>({
     resolver: zodResolver(schema),
-    mode: "onChange",
+    mode: "onSubmit",
     reValidateMode: "onChange",
+    criteriaMode: "all",
   });
 
   const [showPassword, setShowPassword] = useState(false);
   const [showRepeatPassword, setShowRepeatPassword] = useState(false);
+  const [photo, setPhoto] = useState<File | null>(null);
+  const [photoError, setPhotoError] = useState<string | null>(null);
+  const [preview, setPreview] = useState<string | null>(null);
 
-  const onSubmit = (data: MyForm) => {
+  const mail = watch("mail") ?? "";
+  const password = watch("password") ?? "";
+  const repeatPassword = watch("repeatPassword") ?? "";
+
+  const isRequiredFieldsFilled =
+    mail.trim() !== "" &&
+    password.trim() !== "" &&
+    repeatPassword.trim() !== "" &&
+    preview !== null;
+
+  const onSubmit = async (data: MyForm) => {
+    if (!photo) {
+      setPhotoError("Загрузите фото");
+      return;
+    }
+
+    if (data.password !== data.repeatPassword) {
+      setError("repeatPassword", {
+        type: "manual",
+        message: "Пароли не совпадают",
+      });
+      return;
+    }
+
     console.log("Данные формы: ", data);
     alert("Форма успешно отправлена!");
   };
 
-  const onInvalid = (errors: any) => {
-    const firstError = Object.keys(errors)[0];
-    if (firstError) {
-      setFocus(firstError as keyof MyForm);
-    }
+  const handleFileAccepted = (file: File) => {
+    setPhotoError(null);
+    setPhoto(file);
+    setPreview(URL.createObjectURL(file));
+  };
+
+  const handleFileRemove = () => {
+    setPhoto(null);
+    setPreview(null);
+    setPhotoError(null);
   };
 
   return (
     <>
       <StyleFormWrapper>
         <StyleFormTitle>Форма регистрации</StyleFormTitle>
-        <StyleFormForm onSubmit={handleSubmit(onSubmit, onInvalid)} noValidate>
+        <StyleFormForm onSubmit={handleSubmit(onSubmit)} noValidate>
           <StyleFormFormList>
             <StyleFormFormElement>
               <StyleFormLabel>
-                <StyleFormSpanName>Email:</StyleFormSpanName>
+                <StyleFormSpanName>
+                  Email: <StyleFormSpanStar>*</StyleFormSpanStar>
+                </StyleFormSpanName>
                 <StyleFormInput
                   {...register("mail")}
                   type="email"
                   placeholder="Введите email"
                 />
-                <StyleFormSpanName>
-                  <StyleFormSpanStar>*</StyleFormSpanStar> Обязательное поле
-                </StyleFormSpanName>
               </StyleFormLabel>
               {errors.mail && (
                 <p style={{ color: "red", marginTop: 5 }}>
@@ -91,7 +176,9 @@ function FormRegister() {
             </StyleFormFormElement>
             <StyleFormFormElement>
               <StyleFormLabel>
-                <StyleFormSpanName>Пароль:</StyleFormSpanName>
+                <StyleFormSpanName>
+                  Пароль: <StyleFormSpanStar>*</StyleFormSpanStar>
+                </StyleFormSpanName>
                 <div style={{ position: "relative" }}>
                   <StyleFormInput
                     {...register("password")}
@@ -105,19 +192,22 @@ function FormRegister() {
                     {showPassword ? "Скрыть" : "Показать"}
                   </StyleFormButtonShow>
                 </div>
-                <StyleFormSpanName>
-                  <StyleFormSpanStar>*</StyleFormSpanStar> Обязательное поле
-                </StyleFormSpanName>
               </StyleFormLabel>
               {errors.password && (
-                <p style={{ color: "red", marginTop: 5 }}>
-                  {errors.password.message}
-                </p>
+                <ul style={{ color: "red", marginTop: 5, paddingLeft: 20 }}>
+                  {(errors.password.message?.split("\n") ?? []).map(
+                    (msg, idx) => (
+                      <li key={idx}>{msg}</li>
+                    )
+                  )}
+                </ul>
               )}
             </StyleFormFormElement>
             <StyleFormFormElement>
               <StyleFormLabel>
-                <StyleFormSpanName>Повторите пароль:</StyleFormSpanName>
+                <StyleFormSpanName>
+                  Повторите пароль: <StyleFormSpanStar>*</StyleFormSpanStar>
+                </StyleFormSpanName>
                 <div style={{ position: "relative" }}>
                   <StyleFormInput
                     {...register("repeatPassword")}
@@ -131,9 +221,6 @@ function FormRegister() {
                     {showRepeatPassword ? "Скрыть" : "Показать"}
                   </StyleFormButtonShow>
                 </div>
-                <StyleFormSpanName>
-                  <StyleFormSpanStar>*</StyleFormSpanStar> Обязательное поле
-                </StyleFormSpanName>
               </StyleFormLabel>
               {errors.repeatPassword && (
                 <p style={{ color: "red", marginTop: 5 }}>
@@ -156,6 +243,21 @@ function FormRegister() {
                 </p>
               )}
             </StyleFormFormElement>
+            <StyleFormFormElement>
+              <div>
+                <StyleFormSpanName>
+                  Фото: <StyleFormSpanStar>*</StyleFormSpanStar>
+                </StyleFormSpanName>
+                <FileDropzone
+                  preview={preview}
+                  onFileAccepted={handleFileAccepted}
+                  onRemove={handleFileRemove}
+                  setPhotoError={setPhotoError}
+                  error={photoError}
+                />
+              </div>
+            </StyleFormFormElement>
+
             <StyleFormCheckboxContainer>
               <StyleFormLabelCheckbox>
                 <StyleFormInputCheckbox
@@ -164,12 +266,16 @@ function FormRegister() {
                 />
                 <StyleFormSpanName>Запомнить меня</StyleFormSpanName>
               </StyleFormLabelCheckbox>
-              <StyleFormButton type="submit">
+              <StyleFormButton type="submit" disabled={!isRequiredFieldsFilled}>
                 Зарегистрироваться
               </StyleFormButton>
             </StyleFormCheckboxContainer>
           </StyleFormFormList>
         </StyleFormForm>
+        <p>
+          <StyleFormSpanStar>*</StyleFormSpanStar> - Поля обязательные для
+          заполнения!
+        </p>
       </StyleFormWrapper>
     </>
   );

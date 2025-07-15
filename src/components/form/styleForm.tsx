@@ -56,9 +56,25 @@ export const StyleFormLabelCheckbox = styled.label``;
 export const StyleFormInputCheckbox = styled.input``;
 
 export const StyleFormButton = styled.button`
-  background-color: rgba(40, 40, 245, 0.89);
-  padding: 10px 40px;
-  color: #fff;
+  padding: 10px 20px;
+  background-color: #4a90e2;
+  color: white;
+  font-size: 16px;
+  font-weight: 600;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+
+  &:hover:not(:disabled) {
+    background-color: rgba(40, 40, 245, 0.89);
+  }
+
+  &:disabled {
+    background-color: #a0aec0;
+    cursor: not-allowed;
+    opacity: 0.6;
+  }
 `;
 
 export const StyleFormButtonShow = styled.button`
@@ -68,4 +84,42 @@ export const StyleFormButtonShow = styled.button`
   background: none;
   border: none;
   cursor: pointer;
+`;
+
+export const StyleDropzoneContainer = styled.div`
+  border: 2px dashed #888;
+  border-radius: 12px;
+  padding: 20px;
+  text-align: center;
+  cursor: pointer;
+  transition: 0.3s;
+
+  &:hover {
+    border-color: #555;
+    background: #f9f9f9;
+  }
+`;
+
+export const StyleDropzonePreviewImage = styled.img`
+  width: 80px;
+  height: 80px;
+  margin-top: 10px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #888;
+`;
+
+export const StyleDropzoneRemoveButton = styled.button`
+  margin-top: 10px;
+  background-color: #ff4d4d;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+
+  &:hover {
+    background-color: #cc0000;
+  }
 `;
